@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Giám Sát Chất Lượng Không Khí IoT</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --aqi-good: #00E400;
+            --aqi-moderate: #FFFF00;
+            --aqi-unhealthy-sensitive: #FF7E00;
+            --aqi-unhealthy: #FF0000;
+            --aqi-very-unhealthy: #8F3F97;
+            --aqi-hazardous: #7E0023;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard-container {
+            padding: 20px;
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .aqi-display {
+            font-size: 4rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 30px;
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .sensor-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .sensor-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .sensor-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .status-badge {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            padding: 15px;
+        }
+        
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online {
+            background-color: #00E400;
+        }
+        
+        .status-offline {
+            background-color: #FF0000;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .last-update {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .header-title {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .icon-large {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header-title">
+            <h1><i class="bi bi-cloud-sun"></i> HỆ THỐNG GIÁM SÁT CHẤT LƯỢNG KHÔNG KHÍ IoT</h1>
+            <p class="lead">Thiết kế và Thi công - Dự án IoT</p>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="container-fluid">
+            <div class="row">
+                <!-- AQI Display -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title text-center"><i class="bi bi-speedometer2"></i> CHỈ SỐ AQI</h5>
+                            <div id="aqiDisplay" class="aqi-display">
+                                {% if latest_data %}
+                                    {{ latest_data.aqi }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </div>
+                            <div class="text-center mt-3">
+                                <span id="aqiStatus" class="status-badge">
+                                    {% if latest_data %}
+                                        {{ latest_data.get_air_quality_status_display }}
+                                    {% else %}
+                                        Không có dữ liệu
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="last-update" id="lastUpdate">
+                                {% if latest_data %}
+                                    Cập nhật: {{ latest_data.timestamp|date:"d/m/Y H:i:s" }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Temperature & Humidity -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card sensor-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-thermometer-half icon-large"></i>
+                            <h5 class="card-title">NHIỆT ĐỘ</h5>
+                            <div class="sensor-value" id="temperature">
+                                {% if latest_data %}
+                                    {{ latest_data.temperature }}°C
+                                {% else %}
+                                    --°C
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card sensor-card mt-3">
+                        <div class="card-body text-center">
+                            <i class="bi bi-droplet-half icon-large"></i>
+                            <h5 class="card-title">ĐỘ ẨM</h5>
+                            <div class="sensor-value" id="humidity">
+                                {% if latest_data %}
+                                    {{ latest_data.humidity }}%
+                                {% else %}
+                                    --%
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gas & Dust -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card sensor-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-wind icon-large"></i>
+                            <h5 class="card-title">MỨC GAS</h5>
+                            <div class="sensor-value" id="gasLevel">
+                                {% if latest_data %}
+                                    {{ latest_data.gas_level }} ppm
+                                {% else %}
+                                    -- ppm
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card sensor-card mt-3">
+                        <div class="card-body text-center">
+                            <i class="bi bi-moisture icon-large"></i>
+                            <h5 class="card-title">MẬT ĐỘ BỤI</h5>
+                            <div class="sensor-value" id="dustDensity">
+                                {% if latest_data %}
+                                    {{ latest_data.dust_density }} µg/m³
+                                {% else %}
+                                    -- µg/m³
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts Row -->
+            <div class="row">
+                <!-- AQI Trend Chart -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-graph-up"></i> BIỂU ĐỒ AQI THEO THỜI GIAN</h5>
+                            <div class="chart-container">
+                                <canvas id="aqiChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Temperature & Humidity Chart -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-thermometer"></i> NHIỆT ĐỘ & ĐỘ ẨM</h5>
+                            <div class="chart-container">
+                                <canvas id="tempHumidChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Device Status & Data Table -->
+            <div class="row">
+                <!-- Device Status -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-cpu"></i> TRẠNG THÁI THIẾT BỊ</h5>
+                            <div id="deviceStatus">
+                                {% for device in devices %}
+                                <div class="device-status mb-3">
+                                    <span class="status-indicator {% if device.is_online %}status-online{% else %}status-offline{% endif %}"></span>
+                                    <div>
+                                        <strong>{{ device.device_name }}</strong><br>
+                                        <small>{{ device.device_id }} - {% if device.is_online %}Online{% else %}Offline{% endif %}</small><br>
+                                        <small>IP: {{ device.ip_address|default:"N/A" }}</small><br>
+                                        <small>Firmware: v{{ device.firmware_version }}</small>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-muted">Không có thiết bị kết nối</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Data Table -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-table"></i> DỮ LIỆU GẦN ĐÂY</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="dataTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Thời gian</th>
+                                            <th>Nhiệt độ</th>
+                                            <th>Độ ẩm</th>
+                                            <th>Gas</th>
+                                            <th>Bụi</th>
+                                            <th>AQI</th>
+                                            <th>Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dataTableBody">
+                                        <!-- Data will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Chart configurations
+        let aqiChart, tempHumidChart;
+        
+        // Initialize charts
+        function initCharts() {
+            const aqiCtx = document.getElementById('aqiChart').getContext('2d');
+            aqiChart = new Chart(aqiCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'AQI',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 500
+                        }
+                    }
+                }
+            });
+            
+            const tempHumidCtx = document.getElementById('tempHumidChart').getContext('2d');
+            tempHumidChart = new Chart(tempHumidCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Nhiệt độ (°C)',
+                        data: [],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        yAxisID: 'y',
+                        tension: 0.4
+                    }, {
+                        label: 'Độ ẩm (%)',
+                        data: [],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        yAxisID: 'y1',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Nhiệt độ (°C)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Độ ẩm (%)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        },
+                    }
+                }
+            });
+        }
+        
+        // Get AQI color based on value
+        function getAqiColor(aqi) {
+            if (aqi <= 50) return '#00E400';
+            if (aqi <= 100) return '#FFFF00';
+            if (aqi <= 150) return '#FF7E00';
+            if (aqi <= 200) return '#FF0000';
+            if (aqi <= 300) return '#8F3F97';
+            return '#7E0023';
+        }
+        
+        // Get AQI status text
+        function getAqiStatus(aqi) {
+            if (aqi <= 50) return 'Tốt';
+            if (aqi <= 100) return 'Trung bình';
+            if (aqi <= 150) return 'Không tốt cho nhóm nhạy cảm';
+            if (aqi <= 200) return 'Không tốt';
+            if (aqi <= 300) return 'Rất không tốt';
+            return 'Nguy hại';
+        }
+        
+        // Update dashboard with latest data
+        function updateDashboard() {
+            fetch('/api/latest/')
+                .then(response => response.json())
+                .then(data => {
+                    // Update AQI display
+                    const aqiDisplay = document.getElementById('aqiDisplay');
+                    aqiDisplay.textContent = data.aqi;
+                    aqiDisplay.style.backgroundColor = getAqiColor(data.aqi);
+                    
+                    // Update status badge
+                    const aqiStatus = document.getElementById('aqiStatus');
+                    aqiStatus.textContent = getAqiStatus(data.aqi);
+                    aqiStatus.style.backgroundColor = getAqiColor(data.aqi);
+                    aqiStatus.style.color = data.aqi <= 100 ? '#000' : '#fff';
+                    
+                    // Update sensor values
+                    document.getElementById('temperature').textContent = data.temperature + '°C';
+                    document.getElementById('humidity').textContent = data.humidity + '%';
+                    document.getElementById('gasLevel').textContent = data.gas_level + ' ppm';
+                    document.getElementById('dustDensity').textContent = data.dust_density + ' µg/m³';
+                    
+                    // Update last update time
+                    const timestamp = new Date(data.timestamp);
+                    document.getElementById('lastUpdate').textContent = 
+                        'Cập nhật: ' + timestamp.toLocaleString('vi-VN');
+                })
+                .catch(error => console.error('Error fetching latest data:', error));
+        }
+        
+        // Update charts with historical data
+        function updateCharts() {
+            fetch('/api/chart-data/?hours=6')
+                .then(response => response.json())
+                .then(data => {
+                    // Update AQI chart
+                    aqiChart.data.labels = data.labels;
+                    aqiChart.data.datasets[0].data = data.aqi;
+                    aqiChart.update();
+                    
+                    // Update temperature & humidity chart
+                    tempHumidChart.data.labels = data.labels;
+                    tempHumidChart.data.datasets[0].data = data.temperature;
+                    tempHumidChart.data.datasets[1].data = data.humidity;
+                    tempHumidChart.update();
+                })
+                .catch(error => console.error('Error fetching chart data:', error));
+        }
+        
+        // Update data table
+        function updateDataTable() {
+            fetch('/api/historical/?hours=24')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('dataTableBody');
+                    tbody.innerHTML = '';
+                    
+                    // Show only last 10 records
+                    data.slice(0, 10).forEach(record => {
+                        const row = tbody.insertRow();
+                        const timestamp = new Date(record.timestamp);
+                        
+                        row.innerHTML = `
+                            <td>${timestamp.toLocaleString('vi-VN')}</td>
+                            <td>${record.temperature}°C</td>
+                            <td>${record.humidity}%</td>
+                            <td>${record.gas_level} ppm</td>
+                            <td>${record.dust_density} µg/m³</td>
+                            <td><strong>${record.aqi}</strong></td>
+                            <td><span style="color: ${getAqiColor(record.aqi)}">●</span> ${getAqiStatus(record.aqi)}</td>
+                        `;
+                    });
+                })
+                .catch(error => console.error('Error fetching historical data:', error));
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            updateDashboard();
+            updateCharts();
+            updateDataTable();
+            
+            // Auto refresh every 5 seconds
+            setInterval(updateDashboard, 5000);
+            setInterval(updateCharts, 30000);
+            setInterval(updateDataTable, 30000);
+        });
+    </script>
+</body>
+</html>

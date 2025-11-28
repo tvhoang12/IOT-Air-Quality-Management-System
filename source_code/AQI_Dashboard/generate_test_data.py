@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script tạo dữ liệu ngẫu nhiên và gửi đến Django API để test dashboard
+Script tạo dữ liệu ngẫu nhiên và gửi đến Firebase qua Django API để test dashboard
 Chạy script này để mô phỏng dữ liệu từ cảm biến
 """
 
@@ -9,10 +9,15 @@ import random
 import time
 import json
 from datetime import datetime
+import os
+import sys
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(__file__))
 
 # Cấu hình
 API_URL = "http://localhost:8000/api/sensor-data/"
-DEVICE_ID = "ESP32_TEST_001"
+DEVICE_ID = "ESP32_TEST_FIREBASE"
 SEND_INTERVAL = 5  # Gửi dữ liệu mỗi 5 giây
 
 def generate_sensor_data():
@@ -73,7 +78,10 @@ def send_data(data):
         )
         
         if response.status_code == 201:
-            print(f"✓ [{datetime.now().strftime('%H:%M:%S')}] Gửi thành công - AQI: {data['aqi']} ({data['air_quality_status']})")
+            result = response.json()
+            saved_to_db = result.get('saved_to_database', False)
+            db_status = " [SAVED TO DB]" if saved_to_db else " [CACHED ONLY]"
+            print(f"✓ [{datetime.now().strftime('%H:%M:%S')}] AQI: {data['aqi']} ({data['air_quality_status']}){db_status}")
             return True
         else:
             print(f"✗ Lỗi: {response.status_code} - {response.text}")

@@ -1,0 +1,7 @@
+[wokwi]
+version = 1
+firmware = "sketch.ino"
+elf = "build/sketch.ino.elf"
+
+# Cấu hình Private Gateway để kết nối localhost
+# Làm theo hướng dẫn: https://docs.wokwi.com/guides/esp32-wifi#the-private-gateway

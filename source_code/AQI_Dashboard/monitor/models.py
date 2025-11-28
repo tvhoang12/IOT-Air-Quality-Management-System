@@ -1,11 +1,22 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 
 class SensorData(models.Model):
     """
     Model lưu trữ dữ liệu từ các cảm biến
     """
+    # Liên kết với thiết bị
+    device = models.ForeignKey(
+        'devices.Device',
+        on_delete=models.CASCADE,
+        related_name='sensor_data',
+        verbose_name="Thiết bị",
+        null=True,  # Cho phép null để tương thích với dữ liệu cũ
+        blank=True
+    )
+    
     # Dữ liệu từ cảm biến DHT11
     temperature = models.FloatField(
         verbose_name="Nhiệt độ (°C)",
@@ -50,12 +61,12 @@ class SensorData(models.Model):
         verbose_name="Mức độ chất lượng không khí"
     )
     
-    # Thông tin thêm
-    device_id = models.CharField(
-        max_length=50,
-        default="ESP32_001",
-        verbose_name="Mã thiết bị"
-    )
+    # Thông tin thêm - DEPRECATED: Sử dụng device ForeignKey thay vì device_id
+    # device_id = models.CharField(
+    #     max_length=50,
+    #     default="ESP32_001",
+    #     verbose_name="Mã thiết bị"
+    # )
     
     timestamp = models.DateTimeField(
         default=timezone.now,
@@ -68,7 +79,7 @@ class SensorData(models.Model):
         verbose_name_plural = "Dữ liệu cảm biến"
         indexes = [
             models.Index(fields=['-timestamp']),
-            models.Index(fields=['device_id', '-timestamp']),
+            models.Index(fields=['device', '-timestamp']),
         ]
     
     def __str__(self):

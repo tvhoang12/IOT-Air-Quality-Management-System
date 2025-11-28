@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách thiết bị - IoT Dashboard</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .container-fluid {
+            padding: 30px;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .device-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        .device-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn-add-device {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn-add-device:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-cloud-sun"></i> IoT Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'devices:device_list' %}">
+                            <i class="bi bi-cpu"></i> Thiết bị
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'users:profile' %}">
+                            <i class="bi bi-person-circle"></i> {{ user.fullname|default:user.username }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'users:logout' %}">
+                            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2><i class="bi bi-cpu"></i> Thiết bị IoT của tôi</h2>
+                    <p class="text-muted mb-0">Quản lý và giám sát các thiết bị IoT</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="{% url 'devices:add_device' %}" class="btn btn-add-device">
+                        <i class="bi bi-plus-circle"></i> Thêm thiết bị mới
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Devices List -->
+        {% if devices %}
+        <div class="row">
+            {% for device in devices %}
+            <div class="col-lg-4 col-md-6">
+                <div class="device-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">{{ device.device_name }}</h5>
+                            <small class="text-muted">ID: {{ device.device_id }}</small>
+                        </div>
+                        <span class="device-status {% if device.is_online %}status-online{% else %}status-offline{% endif %}">
+                            {% if device.is_online %}
+                                <i class="bi bi-wifi"></i> Online
+                            {% else %}
+                                <i class="bi bi-wifi-off"></i> Offline
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p class="mb-2">
+                            <i class="bi bi-geo-alt"></i> 
+                            <strong>Vị trí:</strong> {{ device.location|default:"Chưa cập nhật" }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-clock-history"></i> 
+                            <strong>Lần kết nối cuối:</strong> 
+                            {% if device.last_seen %}
+                                {{ device.last_seen|date:"d/m/Y H:i" }}
+                            {% else %}
+                                Chưa kết nối
+                            {% endif %}
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi bi-info-circle"></i> 
+                            <strong>Trạng thái:</strong> {{ device.get_status_display }}
+                        </p>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'devices:device_detail' device.id %}" class="btn btn-sm btn-outline-primary flex-fill">
+                            <i class="bi bi-eye"></i> Xem chi tiết
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteDevice({{ device.id }}, '{{ device.device_name }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h3>Chưa có thiết bị nào</h3>
+            <p class="text-muted">Bắt đầu bằng cách thêm thiết bị IoT đầu tiên của bạn</p>
+            <a href="{% url 'devices:add_device' %}" class="btn btn-add-device mt-3">
+                <i class="bi bi-plus-circle"></i> Thêm thiết bị đầu tiên
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function deleteDevice(deviceId, deviceName) {
+            if (confirm(`Bạn có chắc muốn xóa thiết bị "${deviceName}"?`)) {
+                fetch(`/devices/${deviceId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Lỗi: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Đã xảy ra lỗi: ' + error);
+                });
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

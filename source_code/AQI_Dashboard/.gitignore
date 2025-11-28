@@ -9,6 +9,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Firebase credentials - QUAN TRỌNG: Không commit file này
+firebase-service-account.json
+firebase-credentials.json
+
 # Virtual environment
 venv/
 env/

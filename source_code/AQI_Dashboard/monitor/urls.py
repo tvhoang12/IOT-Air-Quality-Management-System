@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
+    path('dashboard/', views.dashboard, name='dashboard_alt'),  # Alternative URL
     
     # API endpoints
     path('api/sensor-data/', views.receive_sensor_data, name='receive_sensor_data'),

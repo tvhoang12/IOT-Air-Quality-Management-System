@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'apps.users',
+    'apps.devices',
     'monitor',
 ]
 
@@ -41,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.users.middleware.FirebaseAuthenticationMiddleware',
 ]
 
 # CORS settings for ESP32
@@ -120,3 +123,14 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ]
 }
+
+# Custom User Model
+AUTH_USER_MODEL = 'users.CustomUser'
+
+# Login URLs
+LOGIN_URL = '/users/login/'
+LOGIN_REDIRECT_URL = '/devices/'
+LOGOUT_REDIRECT_URL = '/users/login/'
+
+# Firebase Configuration
+FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'firebase-service-account.json')

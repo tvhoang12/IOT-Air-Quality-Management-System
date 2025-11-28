@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script tạo dữ liệu lịch sử (bulk insert) để test biểu đồ
+Script tạo dữ liệu lịch sử (bulk insert) vào Firebase để test biểu đồ
 Tạo nhiều bản ghi cùng lúc với timestamp khác nhau
 """
 
@@ -8,9 +8,14 @@ import requests
 import random
 from datetime import datetime, timedelta
 import time
+import os
+import sys
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(__file__))
 
 API_URL = "http://localhost:8000/api/sensor-data/"
-DEVICE_ID = "ESP32_TEST_001"
+DEVICE_ID = "ESP32_TEST_FIREBASE_HISTORICAL"
 
 def generate_historical_data(hours=24, interval_minutes=10):
     """

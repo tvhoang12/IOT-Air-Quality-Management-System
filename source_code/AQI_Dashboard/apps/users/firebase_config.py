@@ -13,7 +13,10 @@ def initialize_firebase():
     if not firebase_admin._apps:
         try:
             cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
+            # Initialize with Database URL to allow Realtime Database usage
+            firebase_admin.initialize_app(cred, {
+                'databaseURL': 'https://long-iot-default-rtdb.firebaseio.com/'
+            })
             print("Firebase initialized successfully")
         except Exception as e:
             print(f"Error initializing Firebase: {e}")

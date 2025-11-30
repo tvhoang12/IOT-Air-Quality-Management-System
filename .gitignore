@@ -1,0 +1,3 @@
+
+# Ignore large model file
+source_code/AQI_Dashboard/sensor_calibration_model.pkl

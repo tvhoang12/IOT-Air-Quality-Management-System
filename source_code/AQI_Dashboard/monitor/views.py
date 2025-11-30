@@ -8,8 +8,8 @@ from rest_framework.response import Response
 import json
 
 from .models import SensorData
-# from .firebase_service import firebase_service  # Commented out - using Django models now
-# from .data_cache import data_cache  # Commented out - using Django models now
+from .firebase_service import firebase_service
+from .data_cache import data_cache
 
 
 def dashboard(request):
@@ -61,9 +61,9 @@ def receive_sensor_data(request):
         "device_id": "ESP32_001"
     }
     """
-    # Validate required fields
-    required_fields = ['temperature', 'humidity', 'gas_level', 'dust_density', 'aqi', 'air_quality_status', 'device_id']
-    data = request.data
+    # Validate required fields (Removed 'aqi' and 'air_quality_status' as they are calculated server-side)
+    required_fields = ['temperature', 'humidity', 'gas_level', 'dust_density', 'device_id']
+    data = request.data.copy() # Make a mutable copy
 
     for field in required_fields:
         if field not in data:
@@ -71,6 +71,66 @@ def receive_sensor_data(request):
                 'status': 'error',
                 'message': f'Thiếu trường bắt buộc: {field}'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+    # --- AI CALIBRATION & AQI CALCULATION ---
+    try:
+        # 1. Get Raw Data
+        temperature = float(data.get('temperature', 0))
+        humidity = float(data.get('humidity', 0))
+        raw_gas = float(data.get('gas_level', 0))
+        raw_dust = float(data.get('dust_density', 0))
+
+        # 2. Apply AI Model
+        import joblib
+        import pandas as pd
+        import os
+        from django.conf import settings
+        
+        dust_density = raw_dust
+        gas_level = raw_gas
+
+        try:
+            model_path = os.path.join(settings.BASE_DIR, 'sensor_calibration_model.pkl')
+            if os.path.exists(model_path):
+                model = joblib.load(model_path)
+                input_df = pd.DataFrame({
+                    'raw_dust': [raw_dust],
+                    'raw_gas': [raw_gas],
+                    'temperature': [temperature],
+                    'humidity': [humidity]
+                })
+                prediction = model.predict(input_df)
+                dust_density = max(0, prediction[0][0])
+                gas_level = max(0, prediction[0][1])
+        except Exception as e:
+            print(f"AI Error in receive_sensor_data: {e}")
+
+        # 3. Calculate AQI (Simplified based on PM2.5)
+        if dust_density <= 50:
+            aqi = int(dust_density)
+        elif dust_density <= 100:
+            aqi = int(50 + (dust_density - 50) * 0.5)
+        else:
+            aqi = int(75 + (dust_density - 100) * 0.75)
+        aqi = min(max(aqi, 0), 500)
+
+        # 4. Determine Status
+        if aqi <= 50: air_quality_status = 'GOOD'
+        elif aqi <= 100: air_quality_status = 'MODERATE'
+        elif aqi <= 150: air_quality_status = 'UNHEALTHY_SENSITIVE'
+        elif aqi <= 200: air_quality_status = 'UNHEALTHY'
+        elif aqi <= 300: air_quality_status = 'VERY_UNHEALTHY'
+        else: air_quality_status = 'HAZARDOUS'
+
+        # 5. Update Data Object
+        data['dust_density'] = dust_density
+        data['gas_level'] = gas_level
+        data['aqi'] = aqi
+        data['air_quality_status'] = air_quality_status
+
+    except ValueError:
+        return Response({'status': 'error', 'message': 'Invalid data format'}, status=status.HTTP_400_BAD_REQUEST)
+
 
     # 1. Luôn cập nhật cache (real-time display)
     data_cache.update_latest(data)

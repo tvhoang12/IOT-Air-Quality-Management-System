@@ -29,26 +29,21 @@
  *   GND         → ESP32 GND
  * ==========================================
  */
-
-#include "DHT.h"
+#include <DHT.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-
 // ============ CẢM BIẾN PINS ============
 #define DHTPIN 6           // DHT11 data pin (User wiring: D6)
 #define DHTTYPE DHT11      // DHT sensor type
 #define MQ135_PIN A1       // MQ-135 analog pin (User wiring: A1)
 #define DUST_LED_PIN 7     // GP2Y10 LED control (User wiring: D7)
 #define DUST_MEASURE_PIN A2 // GP2Y10 analog pin (User wiring: A2)
-
 // ============ TIMING ============
 unsigned long lastSendTime = 0;
 const long sendInterval = 60000; // Gửi mỗi 1 phút (60000ms)
-
 // ============ SENSOR OBJECTS ============
 DHT dht(DHTPIN, DHTTYPE);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Nếu lỗi hãy đổi 0x27 thành 0x3F
-
 void setup() {
   // Serial để gửi dữ liệu cho ESP32
   Serial.begin(9600);
@@ -66,7 +61,6 @@ void setup() {
   // Chờ ổn định
   delay(2000);
 }
-
 void loop() {
   unsigned long currentTime = millis();
   
@@ -75,7 +69,6 @@ void loop() {
   float humidity = readHumidity();
   float gasLevel = readGasSensor();
   float dustDensity = readDustSensor();
-
   // Hiển thị LCD (Mỗi 2 giây chuyển trang hoặc cập nhật)
   // Ở đây hiển thị đơn giản luân phiên
   static unsigned long lastLcdUpdate = 0;
@@ -119,19 +112,15 @@ void loop() {
     sendDataToESP32(temperature, humidity, gasLevel, dustDensity);
   }
 }
-
 // ============ ĐỌC CẢM BIẾN ============
-
 float readTemperature() {
   float temp = dht.readTemperature();
   return temp;
 }
-
 float readHumidity() {
   float hum = dht.readHumidity();
   return hum;
 }
-
 float readGasSensor() {
   // Đọc giá trị analog từ MQ-135
   int rawValue = analogRead(MQ135_PIN);
@@ -145,7 +134,6 @@ float readGasSensor() {
   
   return ppm;
 }
-
 float readDustSensor() {
   // GP2Y10 dust sensor protocol
   digitalWrite(DUST_LED_PIN, LOW);
@@ -168,9 +156,7 @@ float readDustSensor() {
   
   return dustDensity * 1000; // Convert mg/m³ to µg/m³
 }
-
 // ============ GỬI DỮ LIỆU ============
-
 void sendDataToESP32(float temp, float hum, float gas, float dust) {
   // Tạo JSON string
   // Format: {"temperature":25.5,"humidity":60.0,"gas_level":150.0,"dust_density":35.0}
@@ -198,7 +184,6 @@ void sendDataToESP32(float temp, float hum, float gas, float dust) {
   Serial.println(dust);
   */
 }
-
 /*
  * ============================================
  * THƯ VIỆN CẦN CÀI (Arduino IDE)

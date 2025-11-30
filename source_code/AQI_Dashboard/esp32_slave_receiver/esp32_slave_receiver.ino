@@ -13,27 +13,22 @@
  * GND                →    GND
  * ==========================================
  */
-
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <ArduinoJson.h>
-
+#include "ArduinoJson.h"
 // ============ WIFI CONFIGURATION ============
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
-
+const char* ssid = "PTIT_B5"; // Thay bằng tên WiFi của bạn
+const char* password = ""; // Để trống nếu WiFi không có mật khẩu
 // ============ SERVER CONFIGURATION ============
-const char* serverUrl = "http://192.168.1.100:8000/devices/api/webhook/";
-const char* apiKey = "tjmQ51M1dDiUsisrLD3a7reze30z3UI0My20dmyyDxI";
-
+const char* serverUrl = "http://172.17.6.8:8000/devices/api/webhook/";
+const char* apiKey = "sAwDq4ZWCq1nnXxc9QDPczVp2pAM2qvrpIbDRnEE2x8";
+// const char* SECRET_KEY = "4cac78ad23e6e5bd41a4eb86f58c0e820a9c03eb5255b2a2bfec19baa7ec0077"
 // ============ SERIAL PINS (ESP32 ↔ Arduino Uno) ============
 #define RXD2 16  // ESP32 GPIO16 ← Arduino TX
 #define TXD2 17  // ESP32 GPIO17 → Arduino RX
-
 // ============ VARIABLES ============
 String receivedData = "";
 bool newData = false;
-
 void setup() {
   // Serial cho debug (USB)
   Serial.begin(115200);
@@ -52,7 +47,6 @@ void setup() {
   
   Serial.println("\n✓ Waiting for Arduino data...\n");
 }
-
 void loop() {
   // Kiểm tra WiFi
   if (WiFi.status() != WL_CONNECTED) {
@@ -83,7 +77,6 @@ void loop() {
     Serial.println("-------------------------\n");
   }
 }
-
 void connectWiFi() {
   Serial.print("Connecting WiFi: ");
   Serial.println(ssid);
@@ -105,7 +98,6 @@ void connectWiFi() {
     Serial.println("\n✗ WiFi Failed!");
   }
 }
-
 void parseAndSend(String jsonStr) {
   // Parse JSON từ Arduino
   StaticJsonDocument<256> doc;
@@ -133,7 +125,6 @@ void parseAndSend(String jsonStr) {
   // Gửi lên server
   sendToServer(temp, hum, gas, dust);
 }
-
 void sendToServer(float t, float h, float g, float d) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("✗ No WiFi!");
@@ -172,7 +163,6 @@ void sendToServer(float t, float h, float g, float d) {
   http.end();
   Serial.println("-------------------------\n");
 }
-
 /*
  * ============================================
  * ARDUINO UNO PHẢI GỬI DỮ LIỆU DẠNG JSON:

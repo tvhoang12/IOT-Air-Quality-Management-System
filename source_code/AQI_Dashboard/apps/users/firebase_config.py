@@ -1,20 +1,22 @@
 import firebase_admin
-from firebase_admin import credentials, auth
+from firebase_admin import credentials, auth, db
 import os
 from django.conf import settings
 
 
 def initialize_firebase():
     """
-    Khởi tạo Firebase Admin SDK
+    Khởi tạo Firebase Admin SDK với Realtime Database
     """
     cred_path = os.path.join(settings.BASE_DIR, 'firebase-service-account.json')
     
     if not firebase_admin._apps:
         try:
             cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred)
-            print("Firebase initialized successfully")
+            firebase_admin.initialize_app(cred, {
+                'databaseURL': 'https://aqi-iot-db-default-rtdb.firebaseio.com/'
+            })
+            print("Firebase initialized successfully with Realtime Database")
         except Exception as e:
             print(f"Error initializing Firebase: {e}")
 

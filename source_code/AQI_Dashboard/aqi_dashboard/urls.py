@@ -10,5 +10,6 @@ urlpatterns = [
     path('users/', include('apps.users.urls')),
     path('devices/', include('apps.devices.urls')),
     path('monitor/', include('monitor.urls')),
+    path('chatbot/', include('apps.chatbot.urls')),
     path('', lambda request: redirect('devices:device_list')),
 ]

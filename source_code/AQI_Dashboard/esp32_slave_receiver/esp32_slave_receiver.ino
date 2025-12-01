@@ -3,13 +3,13 @@
 #include <ArduinoJson.h>
 
 // ============ WIFI CONFIGURATION ============
-const char* ssid = "PTIT_B5";
-// const char* password = "123456788";
+const char* ssid = "iPhone";
+const char* password = "12345678";
 
 // ============ SERVER CONFIGURATION ============
-const char* serverUrl = "http://172.17.9.139:8000/devices/api/webhook/";
-const char* apiKey = "eX4fOrsMMMyGwWrfI0CnLAYqRV_-p4rsLIz3Znr0ZfY";
-const char* secretKey = "e35da08fb9a8209efa9733d35dab2ec1bd0960aa00db83cb251861c8b76ca0b6";
+const char* serverUrl = "http://139.59.227.123:8000/devices/api/webhook/";
+const char* apiKey = "xo1HfYPET-IEuq-4yBq8PovTpKqBHk5AB10F0VejbpA";
+const char* secretKey = "10708b2aa723b92d594a40615c24aab38551cca7ef835cdc2e7768400f97acc2";
 
 // ============ SERIAL PINS (ESP32 ↔ Arduino Uno) ============
 // Arduino D0 (RX) → ESP32 D17 (TX2)

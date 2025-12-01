@@ -155,10 +155,52 @@ def device_data_webhook(request):
         from monitor.models import SensorData
         
         # Lấy giá trị sensor
-        temperature = data.get('temperature', 0)
-        humidity = data.get('humidity', 0)
-        gas_level = data.get('gas_level', 0)
-        dust_density = data.get('dust_density', 0)
+        # Lấy giá trị sensor (Raw Data)
+        temperature = float(data.get('temperature', 0))
+        humidity = float(data.get('humidity', 0))
+        raw_gas = float(data.get('gas_level', 0))
+        raw_dust = float(data.get('dust_density', 0))
+
+        # --- AI CALIBRATION START ---
+        import joblib
+        import pandas as pd
+        import os
+        from django.conf import settings
+
+        try:
+            model_path = os.path.join(settings.BASE_DIR, 'sensor_calibration_model.pkl')
+            if os.path.exists(model_path):
+                # Load model (nên cache model global để tối ưu performance, nhưng load ở đây cho đơn giản trước)
+                model = joblib.load(model_path)
+                
+                # Prepare input dataframe
+                input_df = pd.DataFrame({
+                    'raw_dust': [raw_dust],
+                    'raw_gas': [raw_gas],
+                    'temperature': [temperature],
+                    'humidity': [humidity]
+                })
+                
+                # Predict corrected values
+                prediction = model.predict(input_df)
+                corrected_dust = prediction[0][0]
+                corrected_gas = prediction[0][1]
+                
+                # Update values to use corrected ones
+                # Giữ lại giá trị gốc nếu muốn lưu cả 2 (cần sửa model), ở đây ta ghi đè để tính AQI chuẩn hơn
+                dust_density = max(0, corrected_dust) # Không âm
+                gas_level = max(0, corrected_gas)
+                
+                print(f"AI Calibration: Dust {raw_dust}->{dust_density:.2f}, Gas {raw_gas}->{gas_level:.2f}")
+            else:
+                print("Model not found, using raw data")
+                dust_density = raw_dust
+                gas_level = raw_gas
+        except Exception as e:
+            print(f"AI Error: {e}")
+            dust_density = raw_dust
+            gas_level = raw_gas
+        # --- AI CALIBRATION END ---
         
         # Tính AQI đơn giản (có thể cải tiến sau)
         # Công thức đơn giản hóa: tính AQI từ dust_density

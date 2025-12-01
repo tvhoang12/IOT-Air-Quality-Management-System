@@ -161,7 +161,7 @@
                     <div class="sensor-label">
                         <i class="bi bi-thermometer-half"></i> Nhiệt độ
                     </div>
-                    <div class="sensor-value">{{ latest_data.temperature }}°C</div>
+                    <div class="sensor-value">{{ latest_data.temperature|floatformat:2 }}°C</div>
                     <small>{{ latest_data.timestamp|date:"H:i:s d/m/Y" }}</small>
                 </div>
             </div>
@@ -170,7 +170,7 @@
                     <div class="sensor-label">
                         <i class="bi bi-droplet-half"></i> Độ ẩm
                     </div>
-                    <div class="sensor-value">{{ latest_data.humidity }}%</div>
+                    <div class="sensor-value">{{ latest_data.humidity|floatformat:2 }}%</div>
                     <small>{{ latest_data.timestamp|date:"H:i:s d/m/Y" }}</small>
                 </div>
             </div>
@@ -179,7 +179,7 @@
                     <div class="sensor-label">
                         <i class="bi bi-cloud"></i> Khí Gas
                     </div>
-                    <div class="sensor-value">{{ latest_data.gas_level }} <small>ppm</small></div>
+                    <div class="sensor-value">{{ latest_data.gas_level|floatformat:2 }} <small>ppm</small></div>
                     <small>{{ latest_data.timestamp|date:"H:i:s d/m/Y" }}</small>
                 </div>
             </div>
@@ -188,7 +188,7 @@
                     <div class="sensor-label">
                         <i class="bi bi-dust"></i> Bụi mịn
                     </div>
-                    <div class="sensor-value">{{ latest_data.dust_density }} <small>µg/m³</small></div>
+                    <div class="sensor-value">{{ latest_data.dust_density|floatformat:2 }} <small>µg/m³</small></div>
                     <small>{{ latest_data.timestamp|date:"H:i:s d/m/Y" }}</small>
                 </div>
             </div>
@@ -230,10 +230,10 @@
                     {% for data in recent_data %}
                     <tr>
                         <td>{{ data.timestamp|date:"H:i:s d/m/Y" }}</td>
-                        <td>{{ data.temperature }}</td>
-                        <td>{{ data.humidity }}</td>
-                        <td>{{ data.gas_level }}</td>
-                        <td>{{ data.dust_density }}</td>
+                        <td>{{ data.temperature|floatformat:2 }}</td>
+                        <td>{{ data.humidity|floatformat:2 }}</td>
+                        <td>{{ data.gas_level|floatformat:2 }}</td>
+                        <td>{{ data.dust_density|floatformat:2 }}</td>
                         <td><strong>{{ data.aqi }}</strong></td>
                         <td>
                             <span class="badge 

@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.users',
     'apps.devices',
+    'apps.chatbot',
     'monitor',
 ]
 
@@ -134,3 +135,6 @@ LOGOUT_REDIRECT_URL = '/users/login/'
 
 # Firebase Configuration
 FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'firebase-service-account.json')
+
+# Gemini AI Configuration
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyA4LxCnrv-7B7YjVmRJifZ-PjFGNn6f7Us')
